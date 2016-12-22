@@ -15,4 +15,10 @@ libutils.a: $(LIBUTILS_OBJS)
 	$(AR) -csr $@ $^
 
 clean:
-	rm -f *.o *.a
+	rm -f *.o
+
+purge:
+	rm -f *.a
+
+cleanhist:
+	rm -rf .git .gitignore
