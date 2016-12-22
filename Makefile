@@ -17,7 +17,7 @@ libutils.a: $(LIBUTILS_OBJS)
 clean:
 	rm -f *.o
 
-purge:
+purge: clean
 	rm -f *.a
 
 cleanhist:
