@@ -1,6 +1,10 @@
 CC     = gcc
 AR     = ar
-CFLAGS = -g -Wall -O2
+CFLAGS = -g -Wall
+
+ifneq (1, $(CF_NO_OPTIMIZE))
+	CFLAGS += -O2
+endif
 
 LIBUTILS_OBJS = \
 	encode.o \
