@@ -1,6 +1,37 @@
+/**
+ * Bed file parser
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2016,2017 Wanding.Zhou@vai.org
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+**/
+
+#ifndef _WZBED_H
+#define _WZBED_H
+
+#include <inttypes.h>
 #include "wztarget.h"
 
+/* This file defines several bed file parsers */
+
+/* Bed file for methylation data */
 typedef struct {
   char *bed;
   gzFile FH;
@@ -19,6 +50,9 @@ static inline void free_bed(methbed_t *m) {
   free(m);
 }
 
+/** General purpose bed file parser, hold all records in memory!
+    bed1_v *beds = bed_read(file_path);
+**/
 typedef struct bed1_t {
   unsigned tid;
   int beg;
@@ -27,6 +61,14 @@ typedef struct bed1_t {
 } bed1_t;
 
 DEFINE_VECTOR(bed1_v, bed1_t)
+
+static inline bed1_t *init_bed_core(void(*init_bed_data)(bed1_t*)) {
+  bed1_t *b = calloc(1, sizeof(bed1_t));
+  if (init_bed_data != NULL)
+    init_bed_data(b);
+  return b;
+}
+
 
 static inline int bed_parse1(char *line, target_v *targets, bed1_t *b, void (*dataparser)(bed1_t*, char**)) {
 
@@ -51,7 +93,6 @@ static inline int bed_parse1(char *line, target_v *targets, bed1_t *b, void (*da
 
   return 1;
 }
-
 
 static inline bed1_v *bed_read(char *bedfn) {
 
@@ -157,3 +198,5 @@ static inline bed1_v *bamregion2bedlist(target_v *targets, char *region) {
   }
   return beds;
 }
+
+#endif /* _WZBED_H */

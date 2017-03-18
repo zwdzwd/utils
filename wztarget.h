@@ -1,3 +1,7 @@
+#ifndef _WZTARGET_H
+#define _WZTARGET_H
+
+/* This file defines target-tid mapping */
 
 typedef struct target_t {
   unsigned tid;
@@ -51,3 +55,5 @@ static inline target_t *get_target(target_v *targets, char *chr) {
   }
   return NULL;
 }
+
+#endif /* _WZTARGET_H */
