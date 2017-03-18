@@ -28,6 +28,7 @@
 
 #include <inttypes.h>
 #include "wztarget.h"
+#include "wzio.h"
 
 /* This file defines several bed file parsers */
 
@@ -50,8 +51,11 @@ static inline void free_bed(methbed_t *m) {
   free(m);
 }
 
-/** General purpose bed file parser, hold all records in memory!
-    bed1_v *beds = bed_read(file_path);
+
+/*************************************
+ ** General-purpose bed file parser **
+ *************************************
+ bed1_v *beds = bed_read(file_path);
 **/
 typedef struct bed1_t {
   unsigned tid;
@@ -62,39 +66,92 @@ typedef struct bed1_t {
 
 DEFINE_VECTOR(bed1_v, bed1_t)
 
-static inline bed1_t *init_bed_core(void(*init_bed_data)(bed1_t*)) {
+#define init_data_f (void (*init_bed_data)(bed1_t*))
+#define parse_data_f (void (*parse_data)(bed1_t*, char**, int))
+#define free_data_f (void (*free_bed_data)(void*))
+
+static inline bed1_t *init_bed1_core(init_data_f init_data) {
   bed1_t *b = calloc(1, sizeof(bed1_t));
-  if (init_bed_data != NULL)
-    init_bed_data(b);
+  if (init_data != NULL)
+    init_data(b);
   return b;
 }
 
+static inline void free_bed1_core(bed1_t *b, free_data_f free_data) {
+  if (free_data != NULL)
+    free_data(b->data);
+  free(b);
+}
 
-static inline int bed_parse1(char *line, target_v *targets, bed1_t *b, void (*dataparser)(bed1_t*, char**)) {
+/**************
+ ** Bed File **
+ **************/
 
-  char *tok; char **linerest;
-  tok=strtok_r(line, "\t", linerest);
-  b->tid = locate_or_insert_target_v(targets, tok);
+typedef struct bed_file_t {
+  char *file_path;
+  gzFile fh;
+  kstring_t line;
+  target_v *targets;
+} bed_file_t;
 
-  /* start */
-  tok=strtok(NULL, "\t", linerest);
-  ensure_number(tok);
-  b->beg = atoi(tok);
+static inline bed_file_t *init_bed_file() {
+  bed_file_t *bed = calloc(1, sizeof(bed_file_t));
+  bed->targets = init_target_v(2);
+}
 
-  /* end */
-  tok=strtok(NULL, "\t", linerest);
-  ensure_number(tok);
-  ob->pos = atoi(tok);
+static inline int bed_read1(bed_file_t *bed, bed1_t *b, parse_data_f parse_data, free_data_f free_data) {
+  if (bed->fh == NULL) return 0;
+  if (gzFile_read_line(bed->fh, &bed->line) == 0) return 0;
 
-  if (dataparser)
-    dataparser(b, linerest);
+  char **fields; int nfields;
+  line_get_fields(bed->line.s, "\t", &fields, &nfields);
+  if (nfields < 3)
+    wzfatal("[%s:%d] Bed file has fewer than 3 columns.\n", __func__, __LINE__);
+
+  b->tid = locate_or_insert_target_v(bed->targets, fields[0]);
+
+  ensure_number(fields[1]);
+  b->beg = atoi(fields[1]);
+
+  ensure_number(fields[2]);
+  b->end = atoi(fields[2]);
+
+  if (free_data != NULL)
+    free_data(b->data);
+    
+  if (parse_data != NULL)
+    parse_data(b, fields, nfields);
   else
     b->data = NULL;
 
   return 1;
 }
 
-static inline bed1_v *bed_read(char *bedfn) {
+/* static inline int bed_parse1(char *line, target_v *targets, bed1_t *b, void (*dataparser)(bed1_t*, char**)) { */
+
+/*   char *tok; char **linerest; */
+/*   tok=strtok_r(line, "\t", linerest); */
+/*   b->tid = locate_or_insert_target_v(targets, tok); */
+
+/*   /\* start *\/ */
+/*   tok=strtok(NULL, "\t", linerest); */
+/*   ensure_number(tok); */
+/*   b->beg = atoi(tok); */
+
+/*   /\* end *\/ */
+/*   tok=strtok(NULL, "\t", linerest); */
+/*   ensure_number(tok); */
+/*   ob->pos = atoi(tok); */
+
+/*   if (dataparser) */
+/*     dataparser(b, linerest); */
+/*   else */
+/*     b->data = NULL; */
+
+/*   return 1; */
+/* } */
+
+static inline bed1_v *bed_read_all(char *bedfn) {
 
   target_v *targets = init_target_v(2);
   bed1_v *beds = init_bed_v(2);

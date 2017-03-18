@@ -122,7 +122,6 @@ vcf_record_t *init_vcf_record() {
 }
 
 void free_vcf_record(vcf_record_t *rec) {
-  free(rec->chrm);
   free(rec->id);
   free(rec->ref);
   free(rec->alt);
@@ -139,6 +138,7 @@ void free_vcf_record(vcf_record_t *rec) {
 vcf_file_t *init_vcf_file(char *vcf_file_path) {
 
   vcf_file_t *vcf = calloc(1, sizeof(vcf_file_t));
+  vcf->targets = init_target_v(2);
   vcf->file_path = strdup(vcf_file_path);
   vcf->fh = wzopen(vcf->file_path);
 
@@ -168,6 +168,7 @@ vcf_file_t *init_vcf_file(char *vcf_file_path) {
 }
 
 void free_vcf_file(vcf_file_t *vcf) {
+  destroy_target_v(vcf->targets);
   free_char_array(vcf->samples, vcf->nsamples);
   free(vcf->file_path);
   gzclose(vcf->fh);
@@ -227,7 +228,7 @@ int vcf_read_record(vcf_file_t *vcf, vcf_record_t *rec) {
     exit(1);
   }
 
-  rec->chrm = strcpy_realloc(rec->chrm, fields[0]);
+  rec->tid = locate_or_insert_target_v(vcf->targets, fields[0]);
   rec->pos = atoi(fields[1]);
   rec->id = strcpy_realloc(rec->id, fields[2]);
   rec->ref = strcpy_realloc(rec->ref, fields[3]);

@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   int i = 0;
   char *value = 0; char **values = 0; int nvalues = 0;
   while (vcf_read_record(vcf, rec)) {
-    printf("%s, %d, %s\n", rec->chrm, rec->pos, rec->id);
+    printf("%s, %d, %s\n", target_name(vcf->targets, rec->tid), rec->pos, rec->id);
     value = get_vcf_record_info("CX", rec->info);
     get_vcf_record_fmt("GT", rec->fmt, vcf, &values, &nvalues);
     if (value) {

@@ -14,3 +14,10 @@ static inline char *strcpy_realloc(char *dest, char *src) {
   strcpy(dest, src);
   return dest;
 }
+
+/* Exit with message */
+static inline wzfatal(const char *msg) {
+  fprintf(stderr, msg);
+  fflush(stderr);
+  exit(1);
+}

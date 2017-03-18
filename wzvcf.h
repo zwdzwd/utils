@@ -27,6 +27,7 @@
 #define _WZVCF_H
 
 #include "wzio.h"
+#include "wztarget.h"
 
 /*********************
  ** VCF parser *******
@@ -87,7 +88,7 @@ vcf_record_fmt_t* line_parse_vcf_fmt(char **fields, int nfields);
  ** One VCF Record **
  ********************/
 typedef struct vcf_record_t {
-  char *chrm;
+  unsigned tid;
   int pos;
   char *id;
   char *ref;
@@ -105,11 +106,11 @@ void free_vcf_record(vcf_record_t *rec);
  ** VCF File ***
  ***************/
 typedef struct vcf_file_t {
+  target_v *targets;            /* chromosome names */
   int nsamples;
   char **samples;
   char *file_path;
   gzFile fh;
-  int read_success;
   kstring_t line;
   /* target samples, selected by index_vcf_samples */
   int *tsample_indices;         /* indices in *samples */
@@ -131,7 +132,7 @@ void index_vcf_samples(vcf_file_t *v, char *sample_str);
 int vcf_read_record(vcf_file_t *vcf, vcf_record_t *rec);
 
 /* get FORMAT for a key
-   returns values from all the samples if sample_indices == NULL.
+   returns values from vcf->tsamples, all the samples if sample_indices == NULL.
    returns NULL if field is not found. */
 int get_vcf_record_fmt(const char *key, vcf_record_fmt_t *fmt, vcf_file_t *vcf, char ***ans, int *n_ans);
 
