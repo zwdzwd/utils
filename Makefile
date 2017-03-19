@@ -9,6 +9,7 @@ endif
 LIBUTILS_OBJS = \
 	encode.o \
 	stats.o \
+	wzvcf.o \
 	wzhmm.o
 
 .c.o :

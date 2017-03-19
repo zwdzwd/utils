@@ -57,6 +57,10 @@ static inline void free_bed(methbed_t *m) {
  *************************************
  bed1_v *beds = bed_read(file_path);
 **/
+
+/****************
+ ** Bed Record **
+ ****************/
 typedef struct bed1_t {
   unsigned tid;
   int beg;
@@ -90,7 +94,7 @@ static inline void free_bed1_core(bed1_t *b, free_data_f free_data) {
 typedef struct bed_file_t {
   char *file_path;
   gzFile fh;
-  kstring_t line;
+  wstring_t line;
   target_v *targets;
 } bed_file_t;
 

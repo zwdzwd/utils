@@ -1,5 +1,5 @@
 #include <zlib.h>
-#include "kstring.h"
+#include "wstring.h"
 #include "wzmisc.h"
 
 /**********************************
@@ -24,23 +24,23 @@ static inline gzFile wzopen(char *file_path) {
  ** Read one line from file **
  *****************************
  returns 1 if hitting \n 0 if EOF */
-static inline int gzFile_read_line(gzFile fh, kstring_t *s) {
+static inline int gzFile_read_line(gzFile fh, wstring_t *s) {
 
-  if (!s) {
+  if (s == NULL) {
     fprintf(stderr, "[%s:%s] Fatal, empty string.\n", __func__, __LINE__);
     fflush(stderr);
     exit(1);
   }
   
   /* reset s */
-  s->l = 0;
+  clear_string(s);
 
   /* read until '\n' or EOF */
   while (1) {
     int c = gzgetc(fh);
     if (c == '\n') return 1;
     if (c == EOF) return 0;
-    kputc(c, s);
+    putchar_string(s, c);
   }
   return 0;                     /* should not come here */
 }

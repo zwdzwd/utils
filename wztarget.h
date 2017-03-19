@@ -6,7 +6,7 @@
 /* This file defines target-tid mapping */
 
 typedef struct target_t {
-  unsigned tid;
+  int tid;
   char *name;
   uint32_t len;
 } target_t;
@@ -33,7 +33,7 @@ static inline unsigned locate_or_insert_target_v(target_v *targets, char *chr) {
   }
   t = next_ref_target_v(targets);
   t->name = strdup(chr);
-  t->tid = targets->size-1;
+  t->tid = ((int) targets->size)-1;
   return t->tid;
 }
 

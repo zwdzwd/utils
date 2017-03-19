@@ -141,16 +141,16 @@ vcf_file_t *init_vcf_file(char *vcf_file_path) {
   vcf->targets = init_target_v(2);
   vcf->file_path = strdup(vcf_file_path);
   vcf->fh = wzopen(vcf->file_path);
-
+  vcf->line = init_string(10);
   char *pch;
-  while (gzFile_read_line(vcf->fh, &vcf->line)) {
-    if (!vcf->line.s) continue;
-    if (vcf->line.s[0] == '#' && vcf->line.s[1] == '#') continue;
-    if (strncmp(vcf->line.s, "#CHROM", 6) == 0) {
+  while (gzFile_read_line(vcf->fh, vcf->line)) {
+    if (!vcf->line) continue;
+    if (vcf->line->s[0] == '#' && vcf->line->s[1] == '#') continue;
+    if (strncmp(vcf->line->s, "#CHROM", 6) == 0) {
 
       /* CHROM - FORMAT */
       int i;
-      pch = strtok(vcf->line.s, "\t");
+      pch = strtok(vcf->line->s, "\t");
       for (i=0; i<9; ++i)
         pch = strtok(NULL, "\t");
 
@@ -172,14 +172,14 @@ void free_vcf_file(vcf_file_t *vcf) {
   free_char_array(vcf->samples, vcf->nsamples);
   free(vcf->file_path);
   gzclose(vcf->fh);
-  free(vcf->line.s);
+  free_string(vcf->line);
   free(vcf->tsample_indices);
   free(vcf);
 }
 
 int vcf_read_line(vcf_file_t *vcf) {
   if (vcf->fh == NULL) return 0;
-  if (gzFile_read_line(vcf->fh, &vcf->line)) return 1;
+  if (gzFile_read_line(vcf->fh, vcf->line)) return 1;
   return 0;
 }
 
@@ -194,6 +194,10 @@ void index_vcf_samples(vcf_file_t *vcf, char *sample_str) {
     vcf->tsample_indices = realloc(vcf->tsample_indices, vcf->n_tsamples*sizeof(int));
     for (i=0; i<vcf->n_tsamples; ++i)
       vcf->tsample_indices[i] = i;
+  } else if (strcmp(sample_str, "FIRST") == 0) {
+    vcf->n_tsamples = 1;
+    vcf->tsample_indices = realloc(vcf->tsample_indices, sizeof(int));
+    vcf->tsample_indices[0] = 0;
   } else {
     char **tsample_names;
     line_get_fields(sample_str, ",", &tsample_names, &vcf->n_tsamples);
@@ -221,7 +225,7 @@ int vcf_read_record(vcf_file_t *vcf, vcf_record_t *rec) {
     return 0;
 
   char **fields; int nfields;
-  line_get_fields(vcf->line.s, "\t", &fields, &nfields);
+  line_get_fields(vcf->line->s, "\t", &fields, &nfields);
   if (nfields < 8) {
     fprintf(stderr, "[Error] Invalid VCF records: fewer than 8 columns. Exit.\n");
     free_fields(fields, nfields);

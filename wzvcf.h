@@ -88,7 +88,7 @@ vcf_record_fmt_t* line_parse_vcf_fmt(char **fields, int nfields);
  ** One VCF Record **
  ********************/
 typedef struct vcf_record_t {
-  unsigned tid;
+  int tid;
   int pos;
   char *id;
   char *ref;
@@ -111,7 +111,8 @@ typedef struct vcf_file_t {
   char **samples;
   char *file_path;
   gzFile fh;
-  kstring_t line;
+  
+  wstring_t *line;
   /* target samples, selected by index_vcf_samples */
   int *tsample_indices;         /* indices in *samples */
   int n_tsamples;
