@@ -1,6 +1,9 @@
+#ifndef _WZIO_H
+#define _WZIO_H
+
 #include <zlib.h>
-#include "wstring.h"
 #include "wzmisc.h"
+#include "wvec.h"
 
 /**********************************
  ** Open file and error handling **
@@ -23,24 +26,33 @@ static inline gzFile wzopen(char *file_path) {
 /*****************************
  ** Read one line from file **
  *****************************
- returns 1 if hitting \n 0 if EOF */
-static inline int gzFile_read_line(gzFile fh, wstring_t *s) {
+
+ * Usage:
+ * char *line;
+ * gzFile_read_line(fh, &line);
+ *
+ * "*s" is either NULL or 
+ * previously allocated c-string
+ * returns 1 if hitting \n 0 if EOF */
+static inline int gzFile_read_line(gzFile fh, char **s) {
 
   if (s == NULL) {
-    fprintf(stderr, "[%s:%s] Fatal, empty string.\n", __func__, __LINE__);
+    fprintf(stderr, "[%s:%d] Fatal, empty string construct.\n", __func__, __LINE__);
     fflush(stderr);
     exit(1);
   }
   
   /* reset s */
-  clear_string(s);
+  int m = 10, l = 0;            /* memory and string length */
+  *s = realloc(*s, m);
 
   /* read until '\n' or EOF */
   while (1) {
     int c = gzgetc(fh);
-    if (c == '\n') return 1;
-    if (c == EOF) return 0;
-    putchar_string(s, c);
+    if (l > m-2) { m <<= 1; *s = realloc(*s, m); }
+    if (c == '\n') {(*s)[l] = '\0'; return 1;}
+    if (c == EOF) {(*s)[l] = '\0'; return 0;}
+    (*s)[l++] = c;
   }
   return 0;                     /* should not come here */
 }
@@ -100,3 +112,6 @@ static inline void line_get_fields(const char *line, const char *sep, char ***fi
   }
   free(working);
 }
+
+
+#endif /* _WZIO_H */

@@ -20,7 +20,7 @@
 #define swap_tmp(a, b, t) { (t) = (a); (a) = (b); (b) = (t); }
 #endif
 
-typedef struct {
+typedef struct wstring_t {
   char *s;                      /* \0-ended string */
   size_t cap;
 } wstring_t;

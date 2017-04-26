@@ -376,6 +376,6 @@ DEFINE_NATIVE_VECTOR(int32_v, int32_t);
 DEFINE_NATIVE_VECTOR(int64_v, int64_t);
 #define int32_v int_v
 
-DEFINE_VECTOR(vpvector, void*);
+/* DEFINE_VECTOR(vpvector, void*); */
 
 #endif

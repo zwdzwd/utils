@@ -13,15 +13,18 @@ void free_vcf_record_info(vcf_record_info_t *info) {
 
 char *get_vcf_record_info(const char *key, vcf_record_info_t *info) {
   int i;
-  for (i=0; i<info->n; ++i) {
-    if (strcmp(info->keys[i], key) == 0) {
-      return strdup(info->values[i]);
+  if (info) {
+    for (i=0; i<info->n; ++i) {
+      if (strcmp(info->keys[i], key) == 0) {
+        return strdup(info->values[i]);
+      }
     }
   }
   return NULL;
 }
 
-vcf_record_info_t* line_parse_vcf_info(char *info_str) {
+/* Read INFO column, allocate a vcf_record_info_t */
+static vcf_record_info_t* line_parse_vcf_info(char *info_str) {
 
   char **subfields; int nsubfields;
   line_get_fields(info_str, ";", &subfields, &nsubfields);
@@ -63,10 +66,12 @@ int get_vcf_record_fmt(const char *key, vcf_record_fmt_t *fmt, vcf_file_t *vcf, 
 
   /* locate field */
   int field_index = -1; int i;
-  for (i=0; i<fmt->nfields; ++i) {
-    if (strcmp(fmt->field_names[i], key) == 0) {
-      field_index = i;
-      break;
+  if (fmt) {
+    for (i=0; i<fmt->nfields; ++i) {
+      if (strcmp(fmt->field_names[i], key) == 0) {
+        field_index = i;
+        break;
+      }
     }
   }
   if (field_index < 0) {
@@ -79,19 +84,20 @@ int get_vcf_record_fmt(const char *key, vcf_record_fmt_t *fmt, vcf_file_t *vcf, 
     *n_ans = vcf->nsamples;
     (*ans) = calloc(vcf->nsamples, sizeof(char*));
     for (i=0; i<vcf->nsamples; ++i) {
-      (*ans)[i] = strdup(fmt->field_values[i*fmt->nsamples + field_index]);
+      (*ans)[i] = strdup(fmt->field_values[i*fmt->nfields + field_index]);
     }
   } else {
     *n_ans = vcf->n_tsamples;
     (*ans) = calloc(vcf->n_tsamples, sizeof(char*));
     for (i=0; i<vcf->n_tsamples; ++i) {
-      (*ans)[i] = strdup(fmt->field_values[vcf->tsample_indices[i]*vcf->n_tsamples + field_index]);
+      (*ans)[i] = strdup(fmt->field_values[vcf->tsample_indices[i]*fmt->nfields + field_index]);
     }
   }
   return 1;
 }
 
-vcf_record_fmt_t* line_parse_vcf_fmt(char **fields, int nfields) {
+/* Read FORMAT column(s), allocate a vcf_record_fmt_t. */
+static vcf_record_fmt_t* line_parse_vcf_fmt(char **fields, int nfields) {
   vcf_record_fmt_t *fmt = calloc(1, sizeof(vcf_record_fmt_t));
   line_get_fields(fields[8], ":", &fmt->field_names, &fmt->nfields);
   fmt->nsamples = nfields - 9;
@@ -141,16 +147,16 @@ vcf_file_t *init_vcf_file(char *vcf_file_path) {
   vcf->targets = init_target_v(2);
   vcf->file_path = strdup(vcf_file_path);
   vcf->fh = wzopen(vcf->file_path);
-  vcf->line = init_string(10);
+  vcf->line = NULL;
   char *pch;
-  while (gzFile_read_line(vcf->fh, vcf->line)) {
+  while (gzFile_read_line(vcf->fh, &vcf->line)) {
     if (!vcf->line) continue;
-    if (vcf->line->s[0] == '#' && vcf->line->s[1] == '#') continue;
-    if (strncmp(vcf->line->s, "#CHROM", 6) == 0) {
+    if (vcf->line[0] == '#' && vcf->line[1] == '#') continue;
+    if (strncmp(vcf->line, "#CHROM", 6) == 0) {
 
       /* CHROM - FORMAT */
       int i;
-      pch = strtok(vcf->line->s, "\t");
+      pch = strtok(vcf->line, "\t");
       for (i=0; i<9; ++i)
         pch = strtok(NULL, "\t");
 
@@ -172,14 +178,14 @@ void free_vcf_file(vcf_file_t *vcf) {
   free_char_array(vcf->samples, vcf->nsamples);
   free(vcf->file_path);
   gzclose(vcf->fh);
-  free_string(vcf->line);
+  free(vcf->line);
   free(vcf->tsample_indices);
   free(vcf);
 }
 
 int vcf_read_line(vcf_file_t *vcf) {
   if (vcf->fh == NULL) return 0;
-  if (gzFile_read_line(vcf->fh, vcf->line)) return 1;
+  if (gzFile_read_line(vcf->fh, &vcf->line)) return 1;
   return 0;
 }
 
@@ -225,7 +231,7 @@ int vcf_read_record(vcf_file_t *vcf, vcf_record_t *rec) {
     return 0;
 
   char **fields; int nfields;
-  line_get_fields(vcf->line->s, "\t", &fields, &nfields);
+  line_get_fields(vcf->line, "\t", &fields, &nfields);
   if (nfields < 8) {
     fprintf(stderr, "[Error] Invalid VCF records: fewer than 8 columns. Exit.\n");
     free_fields(fields, nfields);

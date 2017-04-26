@@ -15,7 +15,7 @@ DEFINE_VECTOR(target_v, target_t);
 
 #define target_name(targets, tid) (ref_target_v((targets), (tid))->name)
 
-static inline destroy_target_v(target_v *targets) {
+static inline void destroy_target_v(target_v *targets) {
   unsigned i;
   for (i=0; i<targets->size; ++i) {
     target_t *t = ref_target_v(targets, i);

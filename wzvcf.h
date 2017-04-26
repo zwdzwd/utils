@@ -62,13 +62,6 @@ typedef struct vcf_record_info_t {
 
 void free_vcf_record_info(vcf_record_info_t *info);
 
-/* Get value by key from vcf_record_info_t.
-   Returns NULL if key is not found */
-char *get_vcf_record_info(const char *key, vcf_record_info_t *info);
-
-/* Read INFO column, allocate a vcf_record_info_t */
-vcf_record_info_t* line_parse_vcf_info(char *info_str);
-
 /******************
  ** FORMAT Field **
  ******************/
@@ -80,9 +73,6 @@ typedef struct vcf_record_fmt_t {
 } vcf_record_fmt_t;
 
 void free_vcf_record_fmt(vcf_record_fmt_t *fmt);
-
-/* Read FORMAT column, allocate a vcf_record_fmt_t. */
-vcf_record_fmt_t* line_parse_vcf_fmt(char **fields, int nfields);
 
 /********************
  ** One VCF Record **
@@ -111,8 +101,7 @@ typedef struct vcf_file_t {
   char **samples;
   char *file_path;
   gzFile fh;
-  
-  wstring_t *line;
+  char *line;                   /* current line */
   /* target samples, selected by index_vcf_samples */
   int *tsample_indices;         /* indices in *samples */
   int n_tsamples;
@@ -123,14 +112,30 @@ void free_vcf_file(vcf_file_t *vcf);
 /* Initialize vcf file for input, read header. */
 vcf_file_t *init_vcf_file(char *vcf_file_path);
 
-/* Read line from vcf, returns 1 if success 0 if reaching EOF. */
-int vcf_read_line(vcf_file_t *v);
+/***************************
+ ** Select Target Samples **
+ ***************************/
 
 /* From a sample list to column indices, which are stored in vcf->tsample_indices */
 void index_vcf_samples(vcf_file_t *v, char *sample_str);
 
+/*********************
+ ** Read One Record **
+ *********************/
+
 /* Read one record from the VCF file. */
 int vcf_read_record(vcf_file_t *vcf, vcf_record_t *rec);
+
+/* Read line from vcf, returns 1 if success 0 if reaching EOF. */
+int vcf_read_line(vcf_file_t *v);
+
+/************************
+ ** Get INFO and FORMAT *
+ ************************/
+
+/* Get value by key from vcf_record_info_t.
+   Returns NULL if key is not found */
+char *get_vcf_record_info(const char *key, vcf_record_info_t *info);
 
 /* get FORMAT for a key
    returns values from vcf->tsamples, all the samples if sample_indices == NULL.
