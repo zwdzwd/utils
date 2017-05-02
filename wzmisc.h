@@ -34,7 +34,7 @@ static inline void wzfatal(const char *msg, ...) {
   vfprintf(stderr, msg, args);
   va_end (args);
   fflush(stderr);
-  exit(1);
+  exit(EXIT_FAILURE);
 }
 
 static inline int is_number(char *s) {
@@ -65,5 +65,19 @@ static inline int strcount_char(char *s, char c) {
       ++n;
   return n;
 }
+
+/***************
+ * min and max *
+ ***************/
+#define max(a,b)                \
+  ({ __typeof__ (a) _a = (a);   \
+    __typeof__ (b) _b = (b);    \
+    _a > _b ? _a : _b; })
+
+#define min(a,b)                \
+  ({ __typeof__ (a) _a = (a);   \
+    __typeof__ (b) _b = (b);    \
+    _a > _b ? _b : _a; })
+
 
 #endif /* _WZMISC_H */
