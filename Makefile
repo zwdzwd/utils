@@ -2,8 +2,9 @@ CC     = gcc
 AR     = ar
 CFLAGS = -g -Wall
 
-ifneq (1, $(CF_NO_OPTIMIZE))
+ifeq (1, $(CF_OPTIMIZE))
 	CFLAGS += -O2
+	CFLAGS := $(filter-out -g, $(CFLAGS))
 endif
 
 LIBUTILS_OBJS = \
