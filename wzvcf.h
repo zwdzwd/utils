@@ -134,7 +134,7 @@ int vcf_read_line(vcf_file_t *v);
  ************************/
 
 /* Get value by key from vcf_record_info_t.
-   Returns NULL if key is not found */
+   Returns NULL if key is not found, allocate memory */
 char *get_vcf_record_info(const char *key, vcf_record_info_t *info);
 
 /* get FORMAT for a key

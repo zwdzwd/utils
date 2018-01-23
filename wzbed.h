@@ -32,26 +32,6 @@
 
 /* This file defines several bed file parsers */
 
-/* Bed file for methylation data */
-/* typedef struct { */
-/*   char *bed; */
-/*   gzFile FH; */
-/*   char *chrm; */
-/*   meth_obs1_t next;             /\* next object *\/ */
-/*   wstring_t nextchrom;          /\* chromosome of next object *\/ */
-/* } methbed_t; */
-
-/* static inline void bed_close(methbed_t *m) { */
-/*   gzclose(m->FH); */
-/* } */
-
-/* static inline void free_bed(methbed_t *m) { */
-/*   free(m->chrm); */
-/*   free(m->nextchrom.s); */
-/*   free(m); */
-/* } */
-
-
 /*************************************
  ** General-purpose bed file parser **
  *************************************
@@ -70,18 +50,18 @@ typedef struct bed1_t {
 
 DEFINE_VECTOR(bed1_v, bed1_t)
 
-typedef void (*init_data_f)(bed1_t *b);
+typedef void (*init_data_f)(bed1_t *b, void *aux_data);
 typedef void (*parse_data_f)(bed1_t *b, char **fields, int nfields);
 typedef void (*free_data_f)(void *data);
 
-static inline bed1_t *init_bed1_core(init_data_f init_data) {
+static inline bed1_t *init_bed1(init_data_f init_data, void *aux_data) {
   bed1_t *b = calloc(1, sizeof(bed1_t));
   if (init_data != NULL)
-    init_data(b);
+    init_data(b, aux_data);
   return b;
 }
 
-static inline void free_bed1_core(bed1_t *b, free_data_f free_data) {
+static inline void free_bed1(bed1_t *b, free_data_f free_data) {
   if (free_data != NULL)
     free_data(b->data);
   free(b);
@@ -98,21 +78,24 @@ typedef struct bed_file_t {
   target_v *targets;
 } bed_file_t;
 
-static inline bed_file_t *init_bed_file() {
+static inline bed_file_t *init_bed_file(char *file_path) {
   bed_file_t *bed = calloc(1, sizeof(bed_file_t));
+  bed->file_path = file_path;
+  bed->fh = wzopen(bed->file_path);
   bed->targets = init_target_v(2);
   bed->line = NULL;
   return bed;
 }
 
 static inline void free_bed_file(bed_file_t *bed) {
+  wzclose(bed->fh);
   destroy_target_v(bed->targets);
   free(bed->file_path);
   free(bed->line);
   free(bed);
 }
 
-static inline int bed_read1(bed_file_t *bed, bed1_t *b, parse_data_f parse_data, free_data_f free_data) {
+static inline int bed_read1(bed_file_t *bed, bed1_t *b, parse_data_f parse_data) {
   if (bed->fh == NULL) return 0;
   if (gzFile_read_line(bed->fh, &bed->line) == 0) return 0;
 
@@ -129,13 +112,8 @@ static inline int bed_read1(bed_file_t *bed, bed1_t *b, parse_data_f parse_data,
   ensure_number(fields[2]);
   b->end = atoi(fields[2]);
 
-  if (free_data != NULL)
-    free_data(b->data);
-    
-  if (parse_data != NULL)
-    parse_data(b, fields, nfields);
-  else
-    b->data = NULL;
+  if (parse_data != NULL) parse_data(b, fields, nfields);
+  else b->data = NULL;
 
   return 1;
 }

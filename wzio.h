@@ -23,6 +23,8 @@ static inline gzFile wzopen(char *file_path) {
   return fh;
 }
 
+#define wzclose gzclose
+
 /*****************************
  ** Read one line from file **
  *****************************

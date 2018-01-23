@@ -37,6 +37,11 @@ static inline void wzfatal(const char *msg, ...) {
   exit(EXIT_FAILURE);
 }
 
+/* convert string to uppercase */
+static inline void wzstrupr(char *s) {
+  for (;*s;++s) *s = toupper((unsigned char)*s);
+}
+
 static inline int is_number(char *s) {
   int i;
   for (i=0;s[i];++i) {
