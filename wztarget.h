@@ -60,4 +60,6 @@ static inline target_t *get_target(target_v *targets, char *chr) {
   return NULL;
 }
 
+#define tid2name(t, tid) (ref_target_v((t), (tid))->name)
+
 #endif /* _WZTARGET_H */

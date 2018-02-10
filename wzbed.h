@@ -80,7 +80,7 @@ typedef struct bed_file_t {
 
 static inline bed_file_t *init_bed_file(char *file_path) {
   bed_file_t *bed = calloc(1, sizeof(bed_file_t));
-  bed->file_path = file_path;
+  bed->file_path = strdup(file_path);
   bed->fh = wzopen(bed->file_path);
   bed->targets = init_target_v(2);
   bed->line = NULL;
@@ -114,6 +114,7 @@ static inline int bed_read1(bed_file_t *bed, bed1_t *b, parse_data_f parse_data)
 
   if (parse_data != NULL) parse_data(b, fields, nfields);
   else b->data = NULL;
+  free_fields(fields, nfields);
 
   return 1;
 }
