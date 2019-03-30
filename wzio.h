@@ -5,22 +5,40 @@
 #include "wzmisc.h"
 #include "wvec.h"
 
-/**********************************
- ** Open file and error handling **
- **********************************/
-static inline gzFile wzopen(char *file_path) {
+/*******************************
+ ** Open file for reading and **
+ ** error handling            **
+ *******************************/
+static inline gzFile wzopen(char *path) {
   gzFile fh;
-  if (strcmp(file_path, "-") == 0) {
+  if (strcmp(path, "-") == 0) {
     fh = gzdopen(fileno(stdin), "r");
   } else {
-    fh = gzopen(file_path, "r");
+    fh = gzopen(path, "r");
     if (!fh) {
-      fprintf(stderr, "[%s:%d] Fatal, cannot open file: %s\n", __func__, __LINE__, file_path);
+      fprintf(stderr, "[%s:%d] Fatal, cannot open file: %s\n",
+              __func__, __LINE__, path);
       fflush(stderr);
       exit(1);
     }
   }
   return fh;
+}
+
+static inline FILE *wzopen_out(char *path) {
+   FILE *out;
+   if (path) {
+      out = fopen(path, "w");
+      if (!out) {
+         fprintf(stderr, "[%s:%d] Fatal, cannot open file: %s\n",
+                 __func__, __LINE__, path);
+         fflush(stderr);
+         exit(1);
+      }
+   } else {
+      out = stdout;
+   }
+   return out;
 }
 
 #define wzclose gzclose
