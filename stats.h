@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define MAXIT 100
+#define MAXIT 10000
 #define EPS 3.0e-7
 #define FPMIN 1.0e-30
 

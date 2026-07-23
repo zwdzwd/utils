@@ -97,8 +97,18 @@ static double beta_cf(double a, double b, double x) {
     if (fabs(del-1.0) < EPS) break;
   }
   if (m > MAXIT) {
-    perror("a or b too big, or MAXIT too small in betacf");
-    abort();
+    /* Non-convergence is not fatal: the continued fraction has a best-so-far
+     * estimate in h, so return it rather than aborting the whole pileup (cf.
+     * htslib kf_betai, which likewise returns its estimate). With MAXIT this
+     * large, real data always converges early; reaching here means genuinely
+     * pathological a/b/x. Warn once so a deep genome does not spam stderr. */
+    static int warned = 0;
+    if (!warned) {
+      warned = 1;
+      fprintf(stderr, "[betacf] warning: continued fraction did not converge "
+              "in %d iterations (a or b very large); returning best estimate. "
+              "This message is shown once.\n", MAXIT);
+    }
   }
   return h;
 }
